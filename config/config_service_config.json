@@ -1,0 +1,26 @@
+{
+	"ListenList":[
+		{
+			"Enable":true,
+			"Port":22003,
+			"Protocol":"http"
+		},
+		{
+			"Enable":false,
+			"Port":33003,
+			"Protocol":"https"
+		}
+	],
+	"Role":"Root",
+	"SourceList":[
+		{
+			"SourceType":"Directory",
+			"Enable":true,
+			"Source":{
+				"Directory":"{BasePath}/data/config_service/source",
+				"IndexFile":"index.json"
+			}
+		}
+	],
+	"SendToList":[]
+}

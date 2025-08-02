@@ -1,0 +1,23 @@
+[
+	{
+	"Name":"ConfigServiceAddress",
+	"Version":2,
+	"DirectoryOnServer":"ConfigServiceAddress",
+	"FilenameOnClient":"ConfigServiceAddress.json",
+	"Format":""
+    },
+    {
+	"Name":"GMLinuxServiceTarget",
+	"Version":1,
+	"DirectoryOnServer":"GMLinuxServiceTarget",
+	"FilenameOnClient":"GMLinuxServiceTarget.json",
+	"Format":""
+    },
+	{
+	"Name":"NFSAutoMount",
+	"Version":1,
+	"DirectoryOnServer":"NFSAutoMount",
+	"FilenameOnClient":"NFSAutoMountConfig.json",
+	"Format":"SingleLine"
+    }
+]
