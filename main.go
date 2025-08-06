@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"net/http"
 	"path"
+	"path/filepath"
 	"time"
 
 	"github.com/codegangsta/negroni"
 	"github.com/gorilla/mux"
 
 	wl_compress "github.com/wsva/lib_go/compress"
+	wl_int "github.com/wsva/lib_go_integration"
 )
 
 func main() {
@@ -23,15 +25,26 @@ func main() {
 
 	routerHttp := mux.NewRouter()
 
+	routerHttp.PathPrefix("/css/").Handler(http.StripPrefix("/css/",
+		http.FileServer(http.Dir(filepath.Join(Basepath, "template/css/")))))
+	routerHttp.PathPrefix("/js/").Handler(http.StripPrefix("/js/",
+		http.FileServer(http.Dir(filepath.Join(Basepath, "template/js/")))))
+
 	routerHttp.Handle("/get",
 		negroni.New(
 			negroni.HandlerFunc(handleGet),
 		))
 
 	serverHttp := negroni.New(negroni.NewRecovery())
+	serverHttp.Use(negroni.NewLogger())
 	serverHttp.UseHandler(routerHttp)
 
 	routerHttps := mux.NewRouter()
+
+	routerHttps.PathPrefix("/css/").Handler(http.StripPrefix("/css/",
+		http.FileServer(http.Dir(filepath.Join(Basepath, "template/css/")))))
+	routerHttps.PathPrefix("/js/").Handler(http.StripPrefix("/js/",
+		http.FileServer(http.Dir(filepath.Join(Basepath, "template/js/")))))
 
 	routerHttps.Handle("/get",
 		negroni.New(
@@ -43,8 +56,26 @@ func main() {
 			negroni.HandlerFunc(handleGetByIP),
 		))
 
+	routerHttps.Handle("/",
+		negroni.New(
+			negroni.HandlerFunc(handleDashboard),
+		))
+	routerHttps.Handle("/login",
+		negroni.New(
+			negroni.HandlerFunc(handleLogin),
+		))
+	routerHttps.Handle(wl_int.OAuth2LoginPath,
+		negroni.New(
+			negroni.HandlerFunc(handleOAuth2Login),
+		))
+	routerHttps.Handle(wl_int.OAuth2CallbackPath,
+		negroni.New(
+			negroni.HandlerFunc(handleOAuth2Callback),
+		))
+
 	serverHttps := negroni.New(negroni.NewRecovery())
 	//server.Use(bha.NewCORSHandler(nil, nil, nil))
+	serverHttps.Use(negroni.NewLogger())
 	serverHttps.UseHandler(routerHttps)
 
 	/*

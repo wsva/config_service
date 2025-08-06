@@ -1,9 +1,13 @@
 package main
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"net/http"
+	"net/url"
+	"path/filepath"
 
 	wl_http "github.com/wsva/lib_go/http"
 	wl_json "github.com/wsva/lib_go/json"
@@ -53,17 +57,79 @@ func handleGetByIP(w http.ResponseWriter, r *http.Request, next http.HandlerFunc
 	}
 }
 
+func handleOAuth2Login(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	oa := oaMap.Add(&mainConfig.AuthService, httpsClient)
+	oa.HandleLogin(w, r)
+}
+
+func handleOAuth2Callback(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	state := r.FormValue("state")
+	oa, err := oaMap.Get(state)
+	if err != nil {
+		http.Error(w, "invalid oauth state", http.StatusBadRequest)
+		return
+	}
+	oaMap.Delete(state)
+	oa.HandleCallback(w, r)
+}
+
+func handleLogin(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	if wl_int.VerifyToken(r, httpsClient, mainConfig.AuthService.IntrospectURL) == nil {
+		return_to := r.FormValue("return_to")
+		if return_to == "" {
+			return_to = "/"
+		}
+		http.Redirect(w, r, return_to, http.StatusSeeOther)
+		return
+	}
+	http.ServeFile(w, r, filepath.Join(Basepath, "template/html/login.html"))
+}
+
+func handleDashboard(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	if wl_int.VerifyToken(r, httpsClient, mainConfig.AuthService.IntrospectURL) != nil {
+		thisURL := wl_net.GetFullURL(r)
+		http.Redirect(w, r, fmt.Sprintf("/login?return_to=%v", url.PathEscape(thisURL)), http.StatusSeeOther)
+		return
+	}
+
+	userinfoCookie, err := r.Cookie("userinfo")
+	if err != nil {
+		wl_http.RespondError(w, "missing user info")
+		return
+	}
+	userinfoBytes, err := base64.URLEncoding.DecodeString(userinfoCookie.Value)
+	if err != nil {
+		wl_http.RespondError(w, "invalid user info")
+		return
+	}
+
+	var userinfo wl_int.UserInfo
+	err = json.Unmarshal(userinfoBytes, &userinfo)
+	if err != nil {
+		wl_http.RespondError(w, "invalid user info")
+		return
+	}
+
+	tpFile := filepath.Join(Basepath, "template/html/dashboard.html")
+	tp, err := template.ParseFiles(tpFile)
+	if err != nil {
+		fmt.Fprintf(w, "parse template %v error: %v", tpFile, err)
+		return
+	}
+	c := struct {
+		Name  string
+		Email string
+	}{
+		Name:  userinfo.Name,
+		Email: userinfo.Email,
+	}
+	tp.Execute(w, c)
+}
+
 func handleCheckToken(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	if !wl_int.CheckInternalKey(r, AESKey, AESIV) {
-		token, err := wl_int.ParseTokenFromRequest(r)
-		if err != nil {
-			fmt.Println("parse token error: ", err)
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-		err = wl_int.CheckAndRefreshToken(cc.AccountAddress, CACrtFile, token)
-		if err != nil {
-			fmt.Println("check token error: ", err)
+		if err := wl_int.VerifyToken(r, httpsClient, mainConfig.AuthService.IntrospectURL); err != nil {
+			fmt.Println("verify token error: ", err)
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}

@@ -1,1 +1,0 @@
-every entry must be written in a single line, because this config will be parsed by shell scripts

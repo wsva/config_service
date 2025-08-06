@@ -7,8 +7,8 @@ toolchain go1.23.11
 require (
 	github.com/codegangsta/negroni v1.0.0
 	github.com/gorilla/mux v1.8.1
-	github.com/wsva/lib_go v1.0.4
-	github.com/wsva/lib_go_integration v1.0.3
+	github.com/wsva/lib_go v1.0.6
+	github.com/wsva/lib_go_integration v1.0.22
 )
 
 require (
@@ -35,6 +35,7 @@ require (
 	github.com/ncruces/go-strftime v0.1.9 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
+	github.com/satori/go.uuid v1.2.0 // indirect
 	github.com/sijms/go-ora/v2 v2.9.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/tidwall/gjson v1.18.0 // indirect
@@ -52,6 +53,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.28.0 // indirect
 	golang.org/x/crypto v0.26.0 // indirect
 	golang.org/x/exp v0.0.0-20250620022241-b7579e27df2b // indirect
+	golang.org/x/oauth2 v0.30.0 // indirect
 	golang.org/x/sync v0.15.0 // indirect
 	golang.org/x/sys v0.34.0 // indirect
 	golang.org/x/text v0.17.0 // indirect

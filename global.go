@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"net/http"
 	"os"
 	"path"
 
@@ -36,21 +37,20 @@ const (
 	ConfigDataHashFile = "config_service_data.zip.sum"
 )
 
-// MainConfig comment
 type MainConfig struct {
-	ListenList []wl_http.ListenInfo   `json:"ListenList"`
-	Role       string                 `json:"Role"`
-	SourceList []ConfigSource         `json:"SourceList"`
-	SendToList []wl_location.Location `json:"SendToList"`
+	ListenList  []wl_http.ListenInfo   `json:"ListenList"`
+	Role        string                 `json:"Role"`
+	SourceList  []ConfigSource         `json:"SourceList"`
+	SendToList  []wl_location.Location `json:"SendToList"`
+	AuthService wl_int.AuthService     `json:"AuthService"`
 }
 
-// global
 var (
+	Basepath       = ""
 	MainConfigFile = path.Join(wl_int.DirConfig, "config_service_config.json")
 	RootDir        = path.Join(wl_int.DirData, "config_service")
 	DataDir        = wl_int.DirData
 	TmpDir         = wl_int.DirTmp
-	PKIPath        = wl_int.DirPKI
 	CACrtFile      = path.Join(wl_int.DirPKI, wl_int.CACrtFile)
 	ServerCrtFile  = path.Join(wl_int.DirPKI, wl_int.ServerCrtFile)
 	ServerKeyFile  = path.Join(wl_int.DirPKI, wl_int.ServerKeyFile)
@@ -58,12 +58,15 @@ var (
 
 var mainConfig MainConfig
 var cc *wl_int.CommonConfig
+var httpsClient *http.Client
+var oaMap wl_int.OAuth2Map
 
 func initGlobals() error {
 	basepath, err := wl_fs.GetExecutableFullpath()
 	if err != nil {
 		return nil
 	}
+	Basepath = basepath
 
 	MainConfigFile = path.Join(basepath, MainConfigFile)
 	contentBytes, err := os.ReadFile(MainConfigFile)
@@ -86,6 +89,11 @@ func initGlobals() error {
 	CACrtFile = path.Join(basepath, CACrtFile)
 	ServerCrtFile = path.Join(basepath, ServerCrtFile)
 	ServerKeyFile = path.Join(basepath, ServerKeyFile)
+
+	httpsClient, err = wl_int.InitHttpsClient(CACrtFile)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

@@ -1,26 +1,33 @@
 {
-	"ListenList":[
-		{
-			"Enable":true,
-			"Port":22003,
-			"Protocol":"http"
-		},
-		{
-			"Enable":true,
-			"Port":33003,
-			"Protocol":"https"
-		}
-	],
-	"Role":"Root",
-	"SourceList":[
-		{
-			"SourceType":"Directory",
-			"Enable":true,
-			"Source":{
-				"Directory":"{BasePath}/data/config_service/source",
-				"IndexFile":"index.json"
-			}
-		}
-	],
-	"SendToList":[]
+  "ListenList": [
+    {
+      "Enable": true,
+      "Port": 22003,
+      "Protocol": "http"
+    },
+    {
+      "Enable": true,
+      "Port": 33003,
+      "Protocol": "https"
+    }
+  ],
+  "Role": "Root",
+  "SourceList": [
+    {
+      "SourceType": "Directory",
+      "Enable": true,
+      "Source": {
+        "Directory": "{BasePath}/data/config_service/source",
+        "IndexFile": "index.json"
+      }
+    }
+  ],
+  "SendToList": [],
+  "AuthService": {
+    "ClientID": "was_config_service",
+    "AuthorizeURL": "https://127.0.0.1:33001/authorize",
+    "TokenURL": "https://was_auth_service:33001/token",
+    "UserInfoURL": "https://was_auth_service:33001/userinfo",
+    "IntrospectURL": "https://was_auth_service:33001/introspect"
+  }
 }
