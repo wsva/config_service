@@ -15,12 +15,19 @@
         body {
             background-color: #f5f5f5;
             margin: 0;
+            font-size: 20px;
         }
 
         .container-full {
             height: 100vh;
             display: table;
             width: 100%;
+            padding: 20px 15px;
+        }
+
+        .login-container {
+            text-align: center;
+            margin: 25px auto;
         }
 
         .table-cell-middle {
@@ -43,6 +50,13 @@
             margin-bottom: 25px;
         }
 
+        .logout-link {
+            background-color: #d97170;
+            border-radius: 4px;
+            padding: 6px 12px;
+            text-align: center;
+        }
+
         .logout-btn {
             margin-top: 20px;
         }
@@ -57,7 +71,6 @@
 
         .navbar-default .dropdown-menu {
             background-color: #f8f8f8;
-            /* 与默认 navbar 背景一致 */
             border: 1px solid #ddd;
             padding: 10px 15px;
             min-width: 200px;
@@ -73,14 +86,57 @@
 
         .navbar-default .dropdown-menu>li>a:hover {
             background-color: #e7e7e7;
-            /* 悬停背景颜色 */
             color: #000;
             text-decoration: none;
         }
 
-        /* 去掉 span 项的默认样式 */
         .navbar-default .dropdown-menu>li>span {
             cursor: default;
+        }
+
+        .form-inline {
+            width: 90%;
+            text-align: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10%;
+            flex-wrap: wrap;
+        }
+
+        .form-inline .form-group {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-inline .form-group label {
+            margin-bottom: 0;
+            white-space: nowrap;
+        }
+
+        .form-inline .form-group input,
+        .form-inline .form-group select {
+            flex: 1;
+        }
+
+        .result-list {
+            margin-top: 20px;
+        }
+
+        .result-item {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+            margin-bottom: 8px;
+        }
+
+        .result-item-content {
+            white-space: pre-wrap;
+            word-break: break-word;
+            padding: 5px;
         }
     </style>
 </head>
@@ -92,49 +148,117 @@
             <div class="navbar-header">
                 <a class="navbar-brand" href="#">Config Service</a>
             </div>
+
             <ul class="nav navbar-nav navbar-right">
+                {{ if .Name }}
                 <li class="dropdown">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button">
                         <span>{{ .Name }}</span> <span class="caret"></span>
                     </a>
                     <ul class="dropdown-menu">
                         <li><span>{{ .Email }}</span></li>
-                        <li><a href="/oauth2/logout">Logout</a></li>
+                        <li><a class="logout-link" href="/logout">Logout</a></li>
                     </ul>
                 </li>
+                {{ end }}
             </ul>
         </div>
     </nav>
 
     <div class="container-full">
-        <div class="table-cell-middle">
-            <div class="row">
-                <div class="col-sm-6 col-sm-offset-3 col-md-4 col-md-offset-4">
-                    <div class="dashboard-container">
-                        <h3 class="title">Welcome</h3>
-
-                        <div class="user-info">
-                            <p><strong>Email:</strong> <span id="user-email">Loading...</span></p>
-                            <p><strong>Real Name:</strong> <span id="user-realname">Loading...</span></p>
-                        </div>
-
-                        <button id="logout-btn" class="btn btn-danger btn-block logout-btn"
-                            style="display:none">Logout</button>
-                    </div>
-                </div>
+        {{ if .Name }}
+        <form class="form-inline" id="config-form">
+            <div class="form-group">
+                <label for="config-type">Config Type</label>
+                <select id="config-type" class="form-control" style="width: 100%;">
+                    <option value="">Loading...</option>
+                </select>
             </div>
+            <div class="form-group">
+                <label for="ip-address">IP Address</label>
+                <input type="text" class="form-control" id="ip-address" placeholder="Enter IP" style="width: 100%;">
+            </div>
+        </form>
+
+        <!-- Config Result -->
+        <div class="result-list" id="config-result"></div>
+        {{ else }}
+        <div class="login-container">
+            <a id="oauth2-login" class="btn btn-primary" href="">LOGIN</a>
         </div>
+        {{ end }}
     </div>
 
     <script>
         $(function () {
-            $('#logout-link').click(function () {
-                $.post("/logout", function () {
-                    console.log("logout")
-                }).fail(function () {
-                    alert("Logout failed");
+            // login
+            const currentUrl = window.location.href;
+            const loginLink = document.getElementById('oauth2-login');
+            if (loginLink) {
+                loginLink.href = `/oauth2/login?return_to=${encodeURIComponent(currentUrl)}`;
+            }
+
+            // config type list
+            $.getJSON('/config/type/all', function (data) {
+                if (!data.success) {
+                    return
+                }
+                const $select = $('#config-type');
+                $select.empty();
+                $select.append(`<option value="">Select Config Type</option>`);
+                data.data.list.forEach(function (item) {
+                    $select.append(`<option value="${item}">${item}</option>`);
                 });
             });
+
+            const set_result = function (data) {
+                if (!data.success) {
+                    return
+                }
+                const $result = $('#config-result');
+                $result.empty();
+                if (!Array.isArray(data.data.list)) {
+                    $result.append(`<div>no data found</div>`);
+                    return
+                }
+                data.data.list.forEach(function (item) {
+                    $result.append(`<div class="result-item">
+                        <label for="result-item-filename">${item.Filename}</label>
+                        <div class="result-item-content">${item.Content}</div>
+                        </div>`);
+                });
+            };
+
+            const get_result = function () {
+                const ip = $('#ip-address').val();
+                const type = $('#config-type').val();
+                if (ip) {
+                    if (type) {
+                        console.log(1);
+                        $.getJSON(`/config/ip?ip=${encodeURIComponent(ip)}&types=${encodeURIComponent(type)}`, function (data) {
+                            set_result(data);
+                        });
+                    } else {
+                        console.log(2);
+                        $.getJSON(`/config/ip?ip=${encodeURIComponent(ip)}`, function (data) {
+                            set_result(data);
+                        });
+                    }
+                } else {
+                    if (type) {
+                        console.log(3);
+                        $.getJSON(`/config/type?type=${encodeURIComponent(type)}`, function (data) {
+                            set_result(data);
+                        });
+                    } else {
+                        console.log(4);
+                        $('#config-result').empty();
+                    }
+                }
+            }
+
+            $('#config-type').change(get_result);
+            $('#ip-address').change(get_result);
         });
     </script>
 </body>

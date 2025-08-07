@@ -30,9 +30,9 @@ func main() {
 	routerHttp.PathPrefix("/js/").Handler(http.StripPrefix("/js/",
 		http.FileServer(http.Dir(filepath.Join(Basepath, "template/js/")))))
 
-	routerHttp.Handle("/get",
+	routerHttp.Handle("/config",
 		negroni.New(
-			negroni.HandlerFunc(handleGet),
+			negroni.HandlerFunc(handleConfig),
 		))
 
 	serverHttp := negroni.New(negroni.NewRecovery())
@@ -46,23 +46,30 @@ func main() {
 	routerHttps.PathPrefix("/js/").Handler(http.StripPrefix("/js/",
 		http.FileServer(http.Dir(filepath.Join(Basepath, "template/js/")))))
 
-	routerHttps.Handle("/get",
+	routerHttps.Handle("/config",
 		negroni.New(
-			negroni.HandlerFunc(handleGet),
+			negroni.HandlerFunc(handleConfig),
 		))
-	routerHttps.Handle("/getbyip",
+	routerHttps.Handle("/config/ip",
 		negroni.New(
-			negroni.HandlerFunc(handleCheckToken),
-			negroni.HandlerFunc(handleGetByIP),
+			negroni.HandlerFunc(handleConfigIP),
+		))
+	routerHttps.Handle("/config/type",
+		negroni.New(
+			negroni.HandlerFunc(handleConfigType),
+		))
+	routerHttps.Handle("/config/type/all",
+		negroni.New(
+			negroni.HandlerFunc(handleTypeAll),
 		))
 
 	routerHttps.Handle("/",
 		negroni.New(
 			negroni.HandlerFunc(handleDashboard),
 		))
-	routerHttps.Handle("/login",
+	routerHttps.Handle("/logout",
 		negroni.New(
-			negroni.HandlerFunc(handleLogin),
+			negroni.HandlerFunc(handleLogout),
 		))
 	routerHttps.Handle(wl_int.OAuth2LoginPath,
 		negroni.New(
